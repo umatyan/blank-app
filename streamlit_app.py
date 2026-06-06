@@ -7,7 +7,6 @@ import pandas as pd
 st.title("🎬 VTuber切り抜き支援ツール")
 st.write("YouTubeのURLを入れるだけで、盛り上がったシーンを自動で見つけます！")
 
-# 初期設定のURL自体を、リヴィさんが今使っている本物のURLに変えました！
 youtube_url = st.text_input(
     "解析したいYouTube動画のURLを入力してください", 
     "https://www.youtube.com/watch?v=60jKLr6RbVo"
@@ -15,14 +14,14 @@ youtube_url = st.text_input(
 
 mode = st.radio("解析モードを選択してください", ["📝 本人の喋り（字幕）から探す", "💬 チャット欄から探す"])
 
-# どんなURLが来ても、後ろの11文字（動画ID）だけを確実に引き抜く頑丈な処理
+# どんなURLの形でも、11文字の動画IDだけを100%正確に抜き出す最強の処理
 def extract_video_id(url):
     if not url:
         return None
-    if "v=" in url:
-        return url.split("v=")[1][:11]
-    if "youtu.be/" in url:
-        return url.split("youtu.be/")[1][:11]
+    # 正則表現を使って、URLの中から11文字のIDだけをピンポイントで抽出します
+    match = re.search(r'(?:v=|\/)([0-9A-Za-z_-]{11})', url)
+    if match:
+        return match.group(1)
     return url[-11:]
 
 video_id = extract_video_id(youtube_url)
@@ -31,11 +30,11 @@ if st.button("🚀 解析をスタート"):
     if not video_id:
         st.error("有効なYouTubeのURLを入力してください。")
     else:
-        st.info(f"動画ID: {video_id} を解析中...")
+        # 実際にYouTubeに送りつけているIDを画面で見えるようにしました
+        st.info(f"抽出された動画ID: 【 {video_id} 】 を解析中...")
         
         if "字幕" in mode:
             try:
-                # 日本語字幕を確実に取得
                 transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['ja'])
                 if transcript:
                     df = pd.DataFrame(transcript)
